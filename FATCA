@@ -1,0 +1,71 @@
+library(XML)
+library(xml2)
+
+abrirycerrar <- function(xml,tag, data = NULL, attrs="" ) {  	#funcion para abrir y cerrar nodos
+	invisible(xml$addTag(tag, data, close = TRUE, attrs))
+}
+
+#meter un setwd() para donde se esté trabajando
+base <- read.csv("Base.csv", sep = ";", header = TRUE)
+
+
+#vamos a iterar sobre los renglones de estas columnas para construir varios AccountReport <- for i in nrow(base)=numero de accountReports que se querra
+#empieza el for: genero varios AccountReports
+i <- 0
+for (i in 1:nrow(base)) { 
+	docu$addTag("ns2:AccountReport", close=FALSE) #abrimos subnodo un AccountReport
+	docu$addTag("ns2:DocSpec", close=FALSE) 	#abro DocSpec
+	# base[,28:30]: es la parte inicial del arbol de la cuenta: DocSpec
+	abrirycerrar(docu, "ns2:DocTypeIndic", data= base[i,28])
+	abrirycerrar(docu, "ns2:DocRefId", data= base[i,29])
+	docu$closeTag() 	#cierro DocSpec
+	abrirycerrar(docu, "ns2:AccountNumber", data= base[i,30], attrs=c(AcctNumberType="OECD605"))
+	docu$addTag("ns2:AccountHolder", close=FALSE) 	#abro AccountHolder
+	if (base[i,32]== "Individual") {tag <- "ns2:Individual"} else {tag <-"ns2:Organisation"}  #abro Individual, esto va a poder cambiar: Persona Física o Moral
+	docu$addTag(tag, close=FALSE) 	
+	abrirycerrar(docu, "ResCountryCode", data= base[i,33])
+	abrirycerrar(docu, "TIN", data= base[i,34], attrs=c(issuedBy="US"))
+	docu$addTag("Name", close=FALSE, attrs=c(nameType="OECD207")) 	#abro Name
+	abrirycerrar(docu, "FirstName", data= base[i,36])
+	abrirycerrar(docu, "MiddleName", data= base[i,37])
+	abrirycerrar(docu, "NamePrefix", data= base[i,38])
+	abrirycerrar(docu, "LastName", data= base[i,39])
+	docu$closeTag() 	#cierro Name
+	docu$addTag("Address", close=FALSE, attrs=c(legalAddressType="OECD301")) 	#abro Address
+	abrirycerrar(docu, "CountryCode", data= base[i,41])
+	docu$addTag("AddressFix", close=FALSE) 	#abro AddressFix
+	abrirycerrar(docu, "Street", data= base[i,43])
+	abrirycerrar(docu, "PostCode", data= base[i,44])
+	abrirycerrar(docu, "City", data= base[i,45])
+	docu$closeTag() 	#cierro AddressFix
+	docu$closeTag() 	#cierro Address
+	abrirycerrar(docu, "Nationality", data= base[i,46])
+	docu$addTag("BirthInfo", close=FALSE) 	#abro BirthInfo
+	abrirycerrar(docu, "BirthDate", data= base[i,48])
+	abrirycerrar(docu, "City", data= base[i,49])
+	docu$addTag("CountryInfo", close=FALSE) 	#abro CountryInfo
+	abrirycerrar(docu, "CountryCode", data= base[i,51])
+	docu$closeTag() 	#cierro CountryInfo
+	docu$closeTag() 	#cierro BirthInfo
+	docu$closeTag() 	#cierro Individual
+	docu$closeTag() 	#cierro AccountHolder
+	abrirycerrar(docu, "ns2:AccountBalance", data = base[i,52],attrs=c(currCode="USD")) 
+	docu$addTag("ns2:Payment", close=FALSE, attrs=c(type="enhanced")) 	#abro Payment
+	abrirycerrar(docu, "ns2:Type", data= base[i,54])
+	abrirycerrar(docu, "ns2:PaymentAmnt", data= base[i,55], attrs=c(currCode="USD"))
+	docu$closeTag() 	#cierro Payment
+	docu$closeTag() 	#cierro AccountReport
+} #cierro el ciclo de generacion de reportes
+
+docu$closeTag() 	#cierro ReportingGroup
+
+docu$closeTag() 	#cierro FATCA
+
+#xml$closeTag() 	#cierro FATCA_OECD
+
+saveXML(docu, file = "fatca.xml")  #imprimimos el XML en arboles
+
+
+
+	
+}
